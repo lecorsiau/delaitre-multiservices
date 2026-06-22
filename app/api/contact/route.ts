@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   }
 
   const { error } = await resend.emails.send({
-    from: "Delaitre Multiservices <contact@delaitre-multiservices.fr>",
+    from: "Delaitre Multiservices <onboarding@resend.dev>",
     to: "jerome.delaitre88@orange.fr",
     replyTo: email || undefined,
     subject: `Demande de devis – ${service}`,
