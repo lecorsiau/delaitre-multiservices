@@ -310,6 +310,8 @@ function ContactForm() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -319,16 +321,24 @@ function ContactForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(
-      `Demande de devis – ${form.service || "Multiservices"}`
-    );
-    const body = encodeURIComponent(
-      `Bonjour Jérôme,\n\nNom : ${form.prenom} ${form.nom}\nTéléphone : ${form.telephone}\nEmail : ${form.email}\nService souhaité : ${form.service}\n\nMessage :\n${form.message}\n\nCordialement`
-    );
-    window.location.href = `mailto:jerome.delaitre88@orange.fr?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    setLoading(false);
+
+    if (res.ok) {
+      setSubmitted(true);
+    } else {
+      setError("Une erreur est survenue. Contactez-nous directement par email.");
+    }
   };
 
   return (
@@ -358,11 +368,11 @@ function ContactForm() {
                   Demande envoyée !
                 </h3>
                 <p className="text-gray-600">
-                  Votre client mail s'est ouvert. Jérôme vous répondra
-                  rapidement.
+                  Votre demande a bien été envoyée à Jérôme. Il vous
+                  recontactera dans les plus brefs délais.
                 </p>
                 <button
-                  onClick={() => setSubmitted(false)}
+                  onClick={() => { setSubmitted(false); setForm({ prenom: "", nom: "", telephone: "", email: "", service: "", message: "" }); }}
                   className="mt-6 text-[#f5a623] font-semibold hover:underline"
                 >
                   Envoyer une autre demande
@@ -464,16 +474,17 @@ function ContactForm() {
                   />
                 </div>
 
+                {error && (
+                  <p className="text-red-500 text-sm text-center">{error}</p>
+                )}
                 <button
                   type="submit"
-                  className="w-full bg-[#f5a623] hover:bg-[#e09510] text-white font-bold text-base py-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full bg-[#f5a623] hover:bg-[#e09510] disabled:opacity-60 text-white font-bold text-base py-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2"
                 >
-                  Envoyer ma demande de devis
-                  <ChevronRight size={18} />
+                  {loading ? "Envoi en cours…" : "Envoyer ma demande de devis"}
+                  {!loading && <ChevronRight size={18} />}
                 </button>
-                <p className="text-xs text-gray-400 text-center">
-                  Votre client mail s'ouvrira — aucune donnée stockée en ligne.
-                </p>
               </form>
             )}
           </div>
