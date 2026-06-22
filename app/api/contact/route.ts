@@ -2,8 +2,24 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error("RESEND_API_KEY manquante");
+    return NextResponse.json(
+      { error: "Configuration serveur manquante. Contactez l'administrateur." },
+      { status: 500 }
+    );
+  }
+
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const { prenom, nom, telephone, email, service, message } = await req.json();
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
+  }
+
+  const { prenom, nom, telephone, email, service, message } = body;
 
   if (!prenom || !nom || !telephone || !service || !message) {
     return NextResponse.json({ error: "Champs obligatoires manquants." }, { status: 400 });
@@ -27,13 +43,14 @@ export async function POST(req: Request) {
         <h3 style="color:#1a2744;font-size:15px;">Message</h3>
         <p style="color:#374151;line-height:1.6;white-space:pre-wrap;">${message}</p>
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;" />
-        <p style="color:#9ca3af;font-size:12px;margin:0;">Message envoyé depuis le site delaitre-multiservices.fr</p>
+        <p style="color:#9ca3af;font-size:12px;margin:0;">Message envoyé depuis le site Delaitre Multiservices</p>
       </div>
     `,
   });
 
   if (error) {
-    return NextResponse.json({ error: "Erreur lors de l'envoi." }, { status: 500 });
+    console.error("Resend error:", error);
+    return NextResponse.json({ error: "Erreur lors de l'envoi de l'email." }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
